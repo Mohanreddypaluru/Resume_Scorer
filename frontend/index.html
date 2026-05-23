@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Scorer - ATS Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="custom.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-file-earmark-person me-2"></i>
+                Resume Scorer
+            </a>
+            <span class="navbar-text ms-auto">
+                <i class="bi bi-shield-check me-1"></i>
+                ATS-Compliant Analysis
+            </span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-6 fw-bold">Resume Fit Analysis</h1>
+                <p class="text-muted">Upload your resume and paste a job description to analyze your fit</p>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-upload me-2"></i>
+                            Upload Resume
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <input type="file" class="form-control" id="resumeFile" accept=".pdf,.docx,.txt">
+                            <div class="form-text">Supported formats: PDF, DOCX, TXT (Max 16MB)</div>
+                        </div>
+                        <div class="text-center text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Your resume is processed locally and not stored
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-file-text me-2"></i>
+                            Job Description
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <textarea class="form-control" id="jdText" rows="6" placeholder="Paste the job description here..."></textarea>
+                        </div>
+                        <button class="btn btn-primary w-100" id="analyzeBtn">
+                            <i class="bi bi-graph-up-arrow me-2"></i>
+                            Analyze Resume
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="row mb-4" id="loadingState" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h5>Analyzing your resume...</h5>
+                        <p class="text-muted">This may take a few moments</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div class="row mb-4" id="errorState" style="display: none;">
+            <div class="col-12">
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" style="display: none;">
+            <!-- Overall Score Card -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-4 text-center">
+                                    <div class="score-circle" id="scoreCircle">
+                                        <span class="score-number" id="overallScore">0</span>
+                                    </div>
+                                    <p class="text-muted mb-0">Overall Score</p>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="row">
+                                        <div class="col-6 mb-3">
+                                            <div class="stat-item">
+                                                <div class="stat-label">Confidence</div>
+                                                <div class="stat-value" id="confidenceLevel">-</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 mb-3">
+                                            <div class="stat-item">
+                                                <div class="stat-label">Confidence Score</div>
+                                                <div class="stat-value" id="confidenceScore">-</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <h6 class="mb-2">Explanation</h6>
+                                        <p class="text-muted small mb-0" id="explanationText"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Scores -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="bi bi-bar-chart me-2"></i>
+                                Category Breakdown
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="categoryScores"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skills Analysis -->
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Matched Skills
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="matchedSkills"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Missing Skills
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="missingSkills"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-dash-circle me-2"></i>
+                                Unmatched Skills
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="unmatchedSkills"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggestions -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0">
+                                <i class="bi bi-lightbulb me-2"></i>
+                                Suggestions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush" id="suggestionsList"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Strengths and Gaps -->
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-star me-2"></i>
+                                Strengths
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush" id="strengthsList"></ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-exclamation-circle me-2"></i>
+                                Gaps
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush" id="gapsList"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Uncertainties -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="bi bi-shield-exclamation me-2"></i>
+                                Uncertainties & Assumptions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="uncertaintiesList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light py-3 mt-4">
+        <div class="container text-center text-muted">
+            <small>Resume Scorer v1.0 | Built with Python, Flask, Bootstrap</small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+</body>
+</html>
